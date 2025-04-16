@@ -45,7 +45,8 @@ public class SignUp extends JFrame implements ActionListener{
         createJoinButton();
         
         // Set frame size and center on screen
-        setSize(800, 600);
+        //TODO: revist size across all windows
+        setSize(850, 650);
         setLocationRelativeTo(null);
         setVisible(true);
     }

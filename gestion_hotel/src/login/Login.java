@@ -37,8 +37,8 @@ public class Login extends JFrame implements ActionListener{
         add(mainPanel);
         
         // Set frame size and center on screen
-        //TODO: keep the size homogenous across all windows
-        setSize(800, 600);
+        //TODO: revist size across all windows
+        setSize(850, 650);
         setLocationRelativeTo(null);
         setVisible(true);
     }
