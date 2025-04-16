@@ -76,24 +76,26 @@ public class Utilisateur {
 
     
     // Interrogation de la base de données
-    //TODO: check on this method
-	// public static boolean emailExists(String email) {
-    //     try {
-    //         Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel", "aziz", "azerty");
+    // Check whether an email exists in the data base
+	public static boolean isEmailExists(String email) {
+        try {
+            Connection connection = new Connect().getConnection();
 
-    //         String selectEmailSQL = "SELECT * FROM utilisateur WHERE email_utilisateur=?";
+            String selectEmailSQL = "SELECT * FROM utilisateur WHERE email_utilisateur=?";
 
-    //         PreparedStatement statement = connection.prepareStatement(selectEmailSQL);
-    //         statement.setString(1, email);
-    //         ResultSet resultSet = statement.executeQuery();
+            PreparedStatement statement = connection.prepareStatement(selectEmailSQL);
+            statement.setString(1, email);
+            ResultSet resultSet = statement.executeQuery();
 
-    //         return resultSet.next(); 
+            boolean returnValue = resultSet.next();
+            connection.close();
+            return returnValue; 
 
-    //     } catch (SQLException ex) {
-    //         ex.printStackTrace();
-    //         return true; 
-    //     }
-    // }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return true; 
+        }
+    }
 
     // Extract user from the data base knowing their email and password
     public Utilisateur getUserFromDB() {
@@ -140,7 +142,7 @@ public class Utilisateur {
     public static void main(String[] args) {
         Utilisateur user = new Utilisateur("amine.benali@example.com", "mdp123");
 
-        // System.out.println(user.emailExists(user.getEmail()));
+        //System.out.println(user.isEmailExists(user.getEmail()));
 
         user = user.getUserFromDB();
         System.out.println(user);

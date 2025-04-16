@@ -2,16 +2,35 @@ package login;
 
 import javax.swing.*;
 import javax.swing.border.*;
+
+import gestion_base_donnees.Connect;
+import utilisateur.Utilisateur;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-public class SignUp extends JFrame {
+
+public class SignUp extends JFrame implements ActionListener{
     
     private JTextField firstNameField, lastNameField, telephoneField, addressField, emailField;
     private JPasswordField passwordField, confirmPasswordField;
     private JButton joinNowButton, loginButton;
     private JPanel headerPanel, formPanel;
-    
+
+    private boolean isValidEmail(String email) {
+	    String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+	    return email.matches(emailRegex);
+    }
+
+    private boolean isValidPhoneNumber(String phoneNumber) {
+	    String phoneRegex = "^\\d{8}$"; 
+	    return phoneNumber.matches(phoneRegex);
+	}
+
     public SignUp() {
         // Set frame properties
         setTitle("RestHive");
@@ -65,16 +84,8 @@ public class SignUp extends JFrame {
         loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         loginButton.setFont(new Font("SansSerif", Font.BOLD, 12));
 
-        //TODO: add action listener
-        //! Don't forget to rename it if you renamed the file
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Open login form
-                new Login();
-                dispose(); // Close login window
-            }
-        });
+        // Add action listener
+        loginButton.addActionListener(this);
         
         loginPanel.add(alreadyLabel);
         loginPanel.add(loginButton);
@@ -225,14 +236,15 @@ public class SignUp extends JFrame {
         
         // Add action listener
         //TODO: add action listener
-        joinNowButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Registration logic would go here
-                JOptionPane.showMessageDialog(SignUp.this, 
-                    "Registration submitted!", "RestHive", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        joinNowButton.addActionListener(this);
+        // joinNowButton.addActionListener(new ActionListener() {
+        //     @Override
+        //     public void actionPerformed(ActionEvent e) {
+        //         // Registration logic would go here
+        //         JOptionPane.showMessageDialog(SignUp.this, 
+        //             "Registration submitted!", "RestHive", JOptionPane.INFORMATION_MESSAGE);
+        //     }
+        // });
     }
     
     //TODO: remove the main() method
@@ -250,6 +262,135 @@ public class SignUp extends JFrame {
                 new SignUp();
             }
         });
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == joinNowButton) {
+            String firstName = firstNameField.getText();
+            String lastName = lastNameField.getText();
+            String telephone = telephoneField.getText();
+            String address = addressField.getText();
+
+            String email = emailField.getText();
+            String type = "client";
+
+            String password = new String(passwordField.getPassword());
+            String passwordConfirmation = new String(confirmPasswordField.getPassword());
+
+            // check if passwords check
+            if (!password.equals(passwordConfirmation)) {
+                JOptionPane.showMessageDialog(null, "Passwords dosent match!", "Error", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            // check whether any field is blank(contains either only whitespaces or is empty)
+            if (
+                firstName.isBlank() || lastName.isBlank() ||
+                email.isBlank() || telephone.isBlank() ||
+                address.isBlank() || password.isBlank() ||
+                passwordConfirmation.isBlank()) {
+                    JOptionPane.showMessageDialog(null, "Please fill in all the required fields.", "Error", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // validate the email
+            if (!isValidEmail(email)) {
+                JOptionPane.showMessageDialog(null, "Please enter a valid email address.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // validate PhoneNumber
+            if (!isValidPhoneNumber(telephone)) {
+                JOptionPane.showMessageDialog(null, "Please enter a valid phone number.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // check whether the user exists using their email 
+            if (Utilisateur.isEmailExists(email)) {
+                JOptionPane.showMessageDialog(null, "Email already exists !", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }  
+            PreparedStatement insertUserStatement = null; //TODO: find a better solution
+            try {
+                // create a connection
+                Connection connection = new Connect().getConnection();
+
+                int idClient = -1; //TODO: find a better solution
+
+                // Create a new client (We know that it doesn't exist already because of the isEmailExists method)
+
+                String insertClientQuery = "INSERT INTO client (nom_client, prenom_client, adresse_client, tel_client) VALUES (?, ?, ?, ?)";
+
+                PreparedStatement insertClientStatement = connection.prepareStatement(insertClientQuery);
+
+                insertClientStatement.setString(1, lastName);
+                insertClientStatement.setString(2, firstName);
+                insertClientStatement.setString(3, address);
+                insertClientStatement.setString(4, telephone);
+
+                insertClientStatement.executeUpdate();
+
+                // retieve the client id generated by default
+                //TODO: find another way to get the user id 
+                String getClientIdQuery = "SELECT id_client FROM client WHERE tel_client=?";
+
+                PreparedStatement getClientIdStatement = connection.prepareStatement(getClientIdQuery);
+                getClientIdStatement.setString(1, telephone);
+  
+                ResultSet resultSet = getClientIdStatement.executeQuery();
+                while (resultSet.next()) {
+                    idClient = resultSet.getInt(1);
+                    System.out.println(idClient);
+                }
+
+                //TODO: delete it
+                // ResultSet generatedKeys = insertClientStatement.getGeneratedKeys();
+                // if (generatedKeys.next()) {
+                //     idClient = generatedKeys.getInt("id_client");
+
+                //     System.out.println(idClient);
+                // }
+                insertClientStatement.close();
+
+
+                // create user
+                String insertUserQuery = "INSERT INTO utilisateur (email_utilisateur, mot_de_passe, id_client, type_utilisateur) VALUES (?, ?, ?, ?)";
+
+                insertUserStatement = connection.prepareStatement(insertUserQuery);
+
+                insertUserStatement.setString(1, email);
+                insertUserStatement.setString(2, password);
+                insertUserStatement.setInt(3, idClient);
+                insertUserStatement.setString(4, type);
+
+                insertUserStatement.executeUpdate();
+
+                // Display successful signup message
+                JOptionPane.showMessageDialog(null, "Welcome, account is successfully created", "Welcome", JOptionPane.INFORMATION_MESSAGE);
+
+                connection.close();
+                // TODO: add a gui and dispose of this frame
+            } catch (SQLException exception) {
+                JOptionPane.showMessageDialog(null, "An error occured while connecting to the data base", "Error", JOptionPane.ERROR_MESSAGE);
+
+                exception.printStackTrace();
+            } finally {
+                if (insertUserStatement != null) {
+                    try {
+                        insertUserStatement.close();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+
+        }
+        else if (e.getSource() == loginButton) {
+            // Open login form
+            new Login();
+            dispose(); // Close login window
+        }
     }
 }
 
