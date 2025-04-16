@@ -1,58 +1,55 @@
 package gestion_base_donnees;
 
-
 import java.sql.*;
+import javax.swing.JOptionPane;
 
 
 public class Connect {
-    public static void main(String[] args) {
+    static Connection connection;
+
+    public Connect() {
         // Database credentials
         String url = "jdbc:mysql://localhost:3306/hotel";
         String username = "aziz";
         String password = "azerty";
 
-        // Load and register MySQL JDBC driver
         try {
             // Load and register MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             // Establish connection
-            Connection conn = DriverManager.getConnection(url, username, password);
-            System.out.println("Connected to the MySQL database!");
+            connection = DriverManager.getConnection(url, username, password);
 
-            // SQL statement to display a table
-            String viewClientTableSQL = "SELECT * FROM client";
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(viewClientTableSQL);
+            //! To test connectitvity
+            //TODO: remove this part
+            // //SQL statement to display a table
+            // String viewClientTableSQL = "SELECT * FROM client";
+            // Statement stmt = connection.createStatement();
+            // ResultSet rs = stmt.executeQuery(viewClientTableSQL);
 
-            // Get metadata to dynamically retrieve column count and names
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            // while (rs.next()) {
+            //     System.out.println(rs.getString(1));
+            // }
+        } 
+        catch(SQLException e){ 
+            JOptionPane.showMessageDialog(null, "Connection failed or SQL error occurred.","Error", JOptionPane.ERROR_MESSAGE);
 
-            // Print column headers
-            for (int i = 1; i <= columnCount; i++) {
-                System.out.print(metaData.getColumnName(i) + "\t");
-            }
-            System.out.println();
+            e.printStackTrace();
 
-            // Print each row of data
-            while (rs.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    System.out.print(rs.getString(i) + "\t");
-                }
-                System.out.println();
-            }
-
-            // Clean up
-            rs.close();
-            stmt.close();
-            conn.close();
         } catch (ClassNotFoundException e) {
-            System.out.println("MySQL JDBC Driver not found.");
-            e.printStackTrace();
-        } catch (SQLException e) {
-            System.out.println("Connection failed or SQL error occurred.");
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "MySQL JDBC Driver not found.","Error", JOptionPane.ERROR_MESSAGE);
+
+            e.printStackTrace(); 
         }
     }
+
+    //getter
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public static void main(String[] args) throws SQLException {
+        new Connect();
+    }
+
 }

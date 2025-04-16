@@ -2,14 +2,20 @@ package login;
 
 import javax.swing.*;
 import javax.swing.border.*;
+
+import admin_dashboard.AdminGui;
+import client_dashboard.ClientGui;
+import receptionniste_dashboard.Receptionniste;
+import utilisateur.Utilisateur;
+
 import java.awt.*;
 import java.awt.event.*;
 
-public class Login extends JFrame {
+public class Login extends JFrame implements ActionListener{
     
     private JTextField emailField;
     private JPasswordField passwordField;
-    private JButton loginButton;
+    private JButton loginButton, joinButton;
     private JPanel mainPanel, headerPanel, contentPanel;
     
     public Login() {
@@ -69,7 +75,7 @@ public class Login extends JFrame {
         JPanel joinPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         joinPanel.setBackground(Color.WHITE);
         JLabel firstTimeLabel = new JLabel("First time?");
-        JButton joinButton = new JButton("Join us here.");
+        joinButton = new JButton("Join us here.");
         joinButton.setBorderPainted(false);
         joinButton.setContentAreaFilled(false);
         joinButton.setFocusable(false);
@@ -77,15 +83,7 @@ public class Login extends JFrame {
         joinButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         joinButton.setFont(new Font("SansSerif", Font.BOLD, 12));
         
-        //TODO: add action listener
-        joinButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Open registration form
-                new SignUp();
-                dispose(); // Close login window
-            }
-        });
+        joinButton.addActionListener(this);
         
         joinPanel.add(firstTimeLabel);
         joinPanel.add(joinButton);
@@ -161,15 +159,8 @@ public class Login extends JFrame {
         loginButton.setBorder(new EmptyBorder(8, 30, 8, 30));
         
         // Add action listener
-        //TODO: add action listener
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(Login.this, 
-                    "Login attempt processed!", "RestHive", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-        
+        loginButton.addActionListener(this);
+
         // Create a container to center the form elements
         JPanel formContainer = new JPanel();
         formContainer.setLayout(new BoxLayout(formContainer, BoxLayout.Y_AXIS));
@@ -208,5 +199,49 @@ public class Login extends JFrame {
                 new Login();
             }
         });
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == loginButton) {
+
+            // Get data from the textFields
+            String email = emailField.getText();
+            char[] password = passwordField.getPassword();
+            String passwordString = String.valueOf(password);
+
+            // create an Utilisateur object 
+            Utilisateur user = new Utilisateur(email, passwordString);
+
+            // extract user from the database
+            user = user.getUserFromDB();
+
+            if (user != null) {
+                String userType = user.getTypeUser();
+
+                if (userType.equals("admin")) {
+	        		JOptionPane.showMessageDialog(null,"Login successful as admin ","Success",JOptionPane.INFORMATION_MESSAGE);
+                    new AdminGui(user);
+                    dispose();
+                } 
+	        	else if (userType.equals("receptionniste")) {
+	        		JOptionPane.showMessageDialog(null,"Login successful as Receptionist ","Success",JOptionPane.INFORMATION_MESSAGE);
+                    new Receptionniste(user);
+                    dispose();
+	        	}
+	        	else if (userType.equals("client")) {
+	        		JOptionPane.showMessageDialog(null,"Login successful as Client ","Success",JOptionPane.INFORMATION_MESSAGE);
+                    new ClientGui(user);
+                    dispose();
+	        	}
+            } else
+                JOptionPane.showMessageDialog(null, "Invalid Login or Password!","Error", JOptionPane.ERROR_MESSAGE);
+        } 
+        
+        else if (e.getSource() == joinButton) {
+            // Open registration form
+            new SignUp();
+            dispose(); // Close login window
+        }
     }
 }
