@@ -7,7 +7,7 @@ import java.awt.event.*;
 
 public class SignUp extends JFrame {
     
-    private JTextField firstNameField, lastNameField, telephoneField, regionField, emailField;
+    private JTextField firstNameField, lastNameField, telephoneField, addressField, emailField;
     private JPasswordField passwordField, confirmPasswordField;
     private JButton joinNowButton, loginButton;
     private JPanel headerPanel, formPanel;
@@ -118,15 +118,15 @@ public class SignUp extends JFrame {
         telephonePanel.add(telephoneLabel, BorderLayout.NORTH);
         telephonePanel.add(telephoneField, BorderLayout.CENTER);
         
-        JPanel regionPanel = new JPanel(new BorderLayout(0, 5));
-        JLabel regionLabel = new JLabel("Adress");
-        regionField = new JTextField();
-        regionField.setPreferredSize(new Dimension(200, 30));
-        regionPanel.add(regionLabel, BorderLayout.NORTH);
-        regionPanel.add(regionField, BorderLayout.CENTER);
+        JPanel addressPanel = new JPanel(new BorderLayout(0, 5));
+        JLabel addressLabel = new JLabel("Address");
+        addressField = new JTextField();
+        addressField.setPreferredSize(new Dimension(200, 30));
+        addressPanel.add(addressLabel, BorderLayout.NORTH);
+        addressPanel.add(addressField, BorderLayout.CENTER);
         
         contactPanel.add(telephonePanel);
-        contactPanel.add(regionPanel);
+        contactPanel.add(addressPanel);
         
         // Email panel
         JPanel emailPanel = new JPanel(new BorderLayout(0, 5));
