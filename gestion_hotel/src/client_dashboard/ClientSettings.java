@@ -2,10 +2,20 @@ package client_dashboard;
 
 import javax.swing.*;
 import javax.swing.border.*;
+
+import gestion_base_donnees.Connect;
+
 import java.awt.*;
 import java.awt.event.*;
 
 import java.awt.image.BufferedImage;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.regex.Pattern;
+
+import login.Login;
 
 public class ClientSettings extends JFrame {
     // User profile information
@@ -15,11 +25,61 @@ public class ClientSettings extends JFrame {
     private String lastName = "Exemple";
     private String phone = "+216 98300666";
     private String address = "123 Main Street, Suite 500";
+    private int clientId; // To store the client ID for database operations
 
     // UI Components
     private JPanel mainPanel;
     private JPanel sidebarPanel;
     private JPanel contentPanel;
+
+     public ClientSettings(int clientId) {
+        this.clientId = clientId;
+        loadClientData(); // Load client data from database on initialization
+
+        // Basic frame setup
+        setTitle("RestHive - User Profile");
+        setSize(800, 600);
+        setMinimumSize(new Dimension(800, 600));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Setup main layout
+        mainPanel = new JPanel(new BorderLayout());
+        setupUIComponents();
+        setContentPane(mainPanel);
+    }
+
+    private void loadClientData() {
+        try (Connection connection = new Connect().getConnection()) {
+            // Get client data
+            String clientQuery = "SELECT nom_client, prenom_client, adresse_client, tel_client FROM client WHERE id_client = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(clientQuery)) {
+                stmt.setInt(1, clientId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    lastName = rs.getString("nom_client");
+                    firstName = rs.getString("prenom_client");
+                    address = rs.getString("adresse_client") != null ? rs.getString("adresse_client") : "";
+                    phone = rs.getString("tel_client") != null ? rs.getString("tel_client") : "";
+                }
+            }
+
+            // Get user data (email and password)
+            String userQuery = "SELECT email_utilisateur FROM utilisateur WHERE id_client = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(userQuery)) {
+                stmt.setInt(1, clientId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    email = rs.getString("email_utilisateur");
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error loading client data: " + e.getMessage(), 
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
 
     public ClientSettings() {
         // Basic frame setup
@@ -326,25 +386,85 @@ public class ClientSettings extends JFrame {
     private void editPassword() {
         String newPassword = JOptionPane.showInputDialog(this, "Enter new password:", "Change Password", JOptionPane.PLAIN_MESSAGE);
         if (newPassword != null && !newPassword.isEmpty()) {
-            password = "•••••••"; // Always display dots for password
-            JOptionPane.showMessageDialog(this, "Password changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            refreshContentPanel();
+            if (newPassword.length() < 6) {
+                JOptionPane.showMessageDialog(this, "Password must be at least 6 characters long", 
+                    "Invalid Password", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try (Connection connection = new Connect().getConnection()) {
+                String query = "UPDATE utilisateur SET mot_de_passe = ? WHERE id_client = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                    stmt.setString(1, newPassword);
+                    stmt.setInt(2, clientId);
+                    int rowsAffected = stmt.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        password = "•••••••"; // Always display dots for password
+                        JOptionPane.showMessageDialog(this, "Password changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        refreshContentPanel();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to update password", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error updating password: " + e.getMessage(), 
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
         }
     }
 
     private void editFirstName() {
         String newFirstName = JOptionPane.showInputDialog(this, "Enter new first name:", "Change First Name", JOptionPane.PLAIN_MESSAGE);
         if (newFirstName != null && !newFirstName.isEmpty()) {
-            firstName = newFirstName;
-            refreshContentPanel();
+            try (Connection connection = new Connect().getConnection()) {
+                String query = "UPDATE client SET prenom_client = ? WHERE id_client = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                    stmt.setString(1, newFirstName);
+                    stmt.setInt(2, clientId);
+                    int rowsAffected = stmt.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        firstName = newFirstName;
+                        refreshContentPanel();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to update first name", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error updating first name: " + e.getMessage(), 
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
         }
     }
 
     private void editLastName() {
         String newLastName = JOptionPane.showInputDialog(this, "Enter new last name:", "Change Last Name", JOptionPane.PLAIN_MESSAGE);
         if (newLastName != null && !newLastName.isEmpty()) {
-            lastName = newLastName;
-            refreshContentPanel();
+            try (Connection connection = new Connect().getConnection()) {
+                String query = "UPDATE client SET nom_client = ? WHERE id_client = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                    stmt.setString(1, newLastName);
+                    stmt.setInt(2, clientId);
+                    int rowsAffected = stmt.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        lastName = newLastName;
+                        refreshContentPanel();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to update last name", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error updating last name: " + e.getMessage(), 
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -367,15 +487,35 @@ public class ClientSettings extends JFrame {
             String newPhone = phoneField.getText();
             String newAddress = addressField.getText();
             
-            if (!newPhone.isEmpty()) {
-                phone = newPhone;
+            // Validate phone number format (8-15 digits)
+            if (!newPhone.isEmpty() && !Pattern.matches("^[0-9]{8,15}$", newPhone)) {
+                JOptionPane.showMessageDialog(this, "Phone number must be 8-15 digits", 
+                    "Invalid Phone", JOptionPane.WARNING_MESSAGE);
+                return;
             }
             
-            if (!newAddress.isEmpty()) {
-                address = newAddress;
+            try (Connection connection = new Connect().getConnection()) {
+                String query = "UPDATE client SET tel_client = ?, adresse_client = ? WHERE id_client = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                    stmt.setString(1, newPhone.isEmpty() ? null : newPhone);
+                    stmt.setString(2, newAddress.isEmpty() ? null : newAddress);
+                    stmt.setInt(3, clientId);
+                    int rowsAffected = stmt.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        phone = newPhone;
+                        address = newAddress;
+                        refreshContentPanel();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to update contacts", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error updating contacts: " + e.getMessage(), 
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
             }
-            
-            refreshContentPanel();
         }
     }
 
@@ -389,15 +529,40 @@ public class ClientSettings extends JFrame {
         );
         
         if (choice == JOptionPane.YES_OPTION) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Your account has been deleted successfully.",
-                    "Account Deleted",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            
-            // Close this frame and open login frame
-            logout();
+            try (Connection connection = new Connect().getConnection()) {
+                // First delete the user (child table)
+                String deleteUserQuery = "DELETE FROM utilisateur WHERE id_client = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(deleteUserQuery)) {
+                    stmt.setInt(1, clientId);
+                    stmt.executeUpdate();
+                }
+                
+                // Then delete the client
+                String deleteClientQuery = "DELETE FROM client WHERE id_client = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(deleteClientQuery)) {
+                    stmt.setInt(1, clientId);
+                    int rowsAffected = stmt.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "Your account has been deleted successfully.",
+                                "Account Deleted",
+                                JOptionPane.INFORMATION_MESSAGE
+                        );
+                        
+                        // Close this frame and open login frame
+                        logout();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to delete account", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error deleting account: " + e.getMessage(), 
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -407,7 +572,7 @@ public class ClientSettings extends JFrame {
         
         // Open the login frame
         SwingUtilities.invokeLater(() -> {
-            LoginFrame loginFrame = new LoginFrame();
+            Login loginFrame = new Login();
             loginFrame.setVisible(true);
         });
     }
@@ -505,319 +670,10 @@ public class ClientSettings extends JFrame {
         }
         
         SwingUtilities.invokeLater(() -> {
-            ClientSettings profile = new ClientSettings();
+            // For testing purposes, we'll use client ID 1
+            // In a real application, this would come from the login process
+            ClientSettings profile = new ClientSettings(1);
             profile.setVisible(true);
         });
     }
 }
-
-// Simple Login Frame class (would be opened after logout)
-class LoginFrame extends JFrame {
-    public LoginFrame() {
-        setTitle("RestHive - Login");
-        setSize(600, 400);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setBackground(Color.WHITE);
-        
-        JLabel loginLabel = new JLabel("Login Screen");
-        loginLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        
-        mainPanel.add(loginLabel);
-        
-        setContentPane(mainPanel);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-// package client_dashboard;
-
-// import javax.swing.*;
-// import javax.swing.border.*;
-// import java.awt.*;
-// import java.awt.event.*;
-// import java.awt.image.BufferedImage;
-// import java.sql.*;
-// import java.util.regex.Pattern;
-
-// import gestion_base_donnees.Connect;
-
-// public class ClientSettings extends JFrame {
-//     // User profile information
-//     private String email = "Client@gmail.com";
-//     private String password = "•••••••";
-//     private String firstName = "Exemple";
-//     private String lastName = "Exemple";
-//     private String phone = "+216 98300666";
-//     private String address = "123 Main Street, Suite 500";
-//     private int clientId; // To store the client ID for database operations
-
-//     // UI Components
-//     private JPanel mainPanel;
-//     private JPanel sidebarPanel;
-//     private JPanel contentPanel;
-
-//     public ClientSettings(int clientId) {
-//         this.clientId = clientId;
-//         loadClientData(); // Load client data from database on initialization
-
-//         // Basic frame setup
-//         setTitle("RestHive - User Profile");
-//         setSize(800, 600);
-//         setMinimumSize(new Dimension(800, 600));
-//         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//         setLocationRelativeTo(null);
-
-//         // Setup main layout
-//         mainPanel = new JPanel(new BorderLayout());
-//         setupUIComponents();
-//         setContentPane(mainPanel);
-//     }
-
-//     private void loadClientData() {
-//         try (Connection connection = new Connect().getConnection()) {
-//             // Get client data
-//             String clientQuery = "SELECT nom_client, prenom_client, adresse_client, tel_client FROM client WHERE id_client = ?";
-//             try (PreparedStatement stmt = connection.prepareStatement(clientQuery)) {
-//                 stmt.setInt(1, clientId);
-//                 ResultSet rs = stmt.executeQuery();
-//                 if (rs.next()) {
-//                     lastName = rs.getString("nom_client");
-//                     firstName = rs.getString("prenom_client");
-//                     address = rs.getString("adresse_client") != null ? rs.getString("adresse_client") : "";
-//                     phone = rs.getString("tel_client") != null ? rs.getString("tel_client") : "";
-//                 }
-//             }
-
-//             // Get user data (email and password)
-//             String userQuery = "SELECT email_utilisateur FROM utilisateur WHERE id_client = ?";
-//             try (PreparedStatement stmt = connection.prepareStatement(userQuery)) {
-//                 stmt.setInt(1, clientId);
-//                 ResultSet rs = stmt.executeQuery();
-//                 if (rs.next()) {
-//                     email = rs.getString("email_utilisateur");
-//                 }
-//             }
-//         } catch (SQLException e) {
-//             JOptionPane.showMessageDialog(this, "Error loading client data: " + e.getMessage(), 
-//                 "Database Error", JOptionPane.ERROR_MESSAGE);
-//             e.printStackTrace();
-//         }
-//     }
-
-//     // ... [Keep all the existing UI setup methods unchanged until the edit methods]
-
-//     private void editPassword() {
-//         String newPassword = JOptionPane.showInputDialog(this, "Enter new password:", "Change Password", JOptionPane.PLAIN_MESSAGE);
-//         if (newPassword != null && !newPassword.isEmpty()) {
-//             if (newPassword.length() < 6) {
-//                 JOptionPane.showMessageDialog(this, "Password must be at least 6 characters long", 
-//                     "Invalid Password", JOptionPane.WARNING_MESSAGE);
-//                 return;
-//             }
-
-//             try (Connection connection = new Connect().getConnection()) {
-//                 String query = "UPDATE utilisateur SET mot_de_passe = ? WHERE id_client = ?";
-//                 try (PreparedStatement stmt = connection.prepareStatement(query)) {
-//                     stmt.setString(1, newPassword);
-//                     stmt.setInt(2, clientId);
-//                     int rowsAffected = stmt.executeUpdate();
-                    
-//                     if (rowsAffected > 0) {
-//                         password = "•••••••"; // Always display dots for password
-//                         JOptionPane.showMessageDialog(this, "Password changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-//                         refreshContentPanel();
-//                     } else {
-//                         JOptionPane.showMessageDialog(this, "Failed to update password", 
-//                             "Error", JOptionPane.ERROR_MESSAGE);
-//                     }
-//                 }
-//             } catch (SQLException e) {
-//                 JOptionPane.showMessageDialog(this, "Error updating password: " + e.getMessage(), 
-//                     "Database Error", JOptionPane.ERROR_MESSAGE);
-//                 e.printStackTrace();
-//             }
-//         }
-//     }
-
-//     private void editFirstName() {
-//         String newFirstName = JOptionPane.showInputDialog(this, "Enter new first name:", "Change First Name", JOptionPane.PLAIN_MESSAGE);
-//         if (newFirstName != null && !newFirstName.isEmpty()) {
-//             try (Connection connection = new Connect().getConnection()) {
-//                 String query = "UPDATE client SET prenom_client = ? WHERE id_client = ?";
-//                 try (PreparedStatement stmt = connection.prepareStatement(query)) {
-//                     stmt.setString(1, newFirstName);
-//                     stmt.setInt(2, clientId);
-//                     int rowsAffected = stmt.executeUpdate();
-                    
-//                     if (rowsAffected > 0) {
-//                         firstName = newFirstName;
-//                         refreshContentPanel();
-//                     } else {
-//                         JOptionPane.showMessageDialog(this, "Failed to update first name", 
-//                             "Error", JOptionPane.ERROR_MESSAGE);
-//                     }
-//                 }
-//             } catch (SQLException e) {
-//                 JOptionPane.showMessageDialog(this, "Error updating first name: " + e.getMessage(), 
-//                     "Database Error", JOptionPane.ERROR_MESSAGE);
-//                 e.printStackTrace();
-//             }
-//         }
-//     }
-
-//     private void editLastName() {
-//         String newLastName = JOptionPane.showInputDialog(this, "Enter new last name:", "Change Last Name", JOptionPane.PLAIN_MESSAGE);
-//         if (newLastName != null && !newLastName.isEmpty()) {
-//             try (Connection connection = new Connect().getConnection()) {
-//                 String query = "UPDATE client SET nom_client = ? WHERE id_client = ?";
-//                 try (PreparedStatement stmt = connection.prepareStatement(query)) {
-//                     stmt.setString(1, newLastName);
-//                     stmt.setInt(2, clientId);
-//                     int rowsAffected = stmt.executeUpdate();
-                    
-//                     if (rowsAffected > 0) {
-//                         lastName = newLastName;
-//                         refreshContentPanel();
-//                     } else {
-//                         JOptionPane.showMessageDialog(this, "Failed to update last name", 
-//                             "Error", JOptionPane.ERROR_MESSAGE);
-//                     }
-//                 }
-//             } catch (SQLException e) {
-//                 JOptionPane.showMessageDialog(this, "Error updating last name: " + e.getMessage(), 
-//                     "Database Error", JOptionPane.ERROR_MESSAGE);
-//                 e.printStackTrace();
-//             }
-//         }
-//     }
-
-//     private void editContacts() {
-//         JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
-//         JLabel phoneLabel = new JLabel("Phone:");
-//         JTextField phoneField = new JTextField(phone);
-//         JLabel addressLabel = new JLabel("Address:");
-//         JTextField addressField = new JTextField(address);
-        
-//         panel.add(phoneLabel);
-//         panel.add(phoneField);
-//         panel.add(addressLabel);
-//         panel.add(addressField);
-        
-//         int result = JOptionPane.showConfirmDialog(this, panel, "Edit Contacts", 
-//                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        
-//         if (result == JOptionPane.OK_OPTION) {
-//             String newPhone = phoneField.getText();
-//             String newAddress = addressField.getText();
-            
-//             // Validate phone number format (8-15 digits)
-//             if (!newPhone.isEmpty() && !Pattern.matches("^[0-9]{8,15}$", newPhone)) {
-//                 JOptionPane.showMessageDialog(this, "Phone number must be 8-15 digits", 
-//                     "Invalid Phone", JOptionPane.WARNING_MESSAGE);
-//                 return;
-//             }
-            
-//             try (Connection connection = new Connect().getConnection()) {
-//                 String query = "UPDATE client SET tel_client = ?, adresse_client = ? WHERE id_client = ?";
-//                 try (PreparedStatement stmt = connection.prepareStatement(query)) {
-//                     stmt.setString(1, newPhone.isEmpty() ? null : newPhone);
-//                     stmt.setString(2, newAddress.isEmpty() ? null : newAddress);
-//                     stmt.setInt(3, clientId);
-//                     int rowsAffected = stmt.executeUpdate();
-                    
-//                     if (rowsAffected > 0) {
-//                         phone = newPhone;
-//                         address = newAddress;
-//                         refreshContentPanel();
-//                     } else {
-//                         JOptionPane.showMessageDialog(this, "Failed to update contacts", 
-//                             "Error", JOptionPane.ERROR_MESSAGE);
-//                     }
-//                 }
-//             } catch (SQLException e) {
-//                 JOptionPane.showMessageDialog(this, "Error updating contacts: " + e.getMessage(), 
-//                     "Database Error", JOptionPane.ERROR_MESSAGE);
-//                 e.printStackTrace();
-//             }
-//         }
-//     }
-
-//     private void showDeleteAccountDialog() {
-//         int choice = JOptionPane.showConfirmDialog(
-//                 this,
-//                 "Are you sure you want to delete your account?\nThis action cannot be undone.",
-//                 "Delete Account",
-//                 JOptionPane.YES_NO_OPTION,
-//                 JOptionPane.WARNING_MESSAGE
-//         );
-        
-//         if (choice == JOptionPane.YES_OPTION) {
-//             try (Connection connection = new Connect().getConnection()) {
-//                 // First delete the user (child table)
-//                 String deleteUserQuery = "DELETE FROM utilisateur WHERE id_client = ?";
-//                 try (PreparedStatement stmt = connection.prepareStatement(deleteUserQuery)) {
-//                     stmt.setInt(1, clientId);
-//                     stmt.executeUpdate();
-//                 }
-                
-//                 // Then delete the client
-//                 String deleteClientQuery = "DELETE FROM client WHERE id_client = ?";
-//                 try (PreparedStatement stmt = connection.prepareStatement(deleteClientQuery)) {
-//                     stmt.setInt(1, clientId);
-//                     int rowsAffected = stmt.executeUpdate();
-                    
-//                     if (rowsAffected > 0) {
-//                         JOptionPane.showMessageDialog(
-//                                 this,
-//                                 "Your account has been deleted successfully.",
-//                                 "Account Deleted",
-//                                 JOptionPane.INFORMATION_MESSAGE
-//                         );
-                        
-//                         // Close this frame and open login frame
-//                         logout();
-//                     } else {
-//                         JOptionPane.showMessageDialog(this, "Failed to delete account", 
-//                             "Error", JOptionPane.ERROR_MESSAGE);
-//                     }
-//                 }
-//             } catch (SQLException e) {
-//                 JOptionPane.showMessageDialog(this, "Error deleting account: " + e.getMessage(), 
-//                     "Database Error", JOptionPane.ERROR_MESSAGE);
-//                 e.printStackTrace();
-//             }
-//         }
-//     }
-
-//     // ... [Keep all the remaining methods unchanged]
-
-//     public static void main(String[] args) {
-//         try {
-//             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//         } catch (Exception e) {
-//             e.printStackTrace();
-//         }
-        
-//         SwingUtilities.invokeLater(() -> {
-//             // For testing purposes, we'll use client ID 1
-//             // In a real application, this would come from the login process
-//             ClientSettings profile = new ClientSettings(1);
-//             profile.setVisible(true);
-//         });
-//     }
-// }
-
-// // ... [Keep the LoginFrame class unchanged]
