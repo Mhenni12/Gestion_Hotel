@@ -7,6 +7,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.sql.*;
+import java.util.Calendar;
+import java.util.Date;
+
+
+import gestion_base_donnees.Connect;
 
 public class DemandeReservationGui extends JFrame {
     // Colors
@@ -127,22 +133,153 @@ public class DemandeReservationGui extends JFrame {
         // Calculate nights
         long diff = selectedCheckOutDate.getTime() - selectedCheckInDate.getTime();
         int nights = (int) (diff / (1000 * 60 * 60 * 24));
-        
-        String message = String.format(
-            "Reservation Details:\n\n" +
-            "Guests: %d adults, %d children\n" +
-            "Check-in: %s\n" +
-            "Check-out: %s\n" +
-            "Nights: %d\n\n" +
-            "Searching for available rooms...",
-            selectedAdults, selectedChildren,
-            dateFormat.format(selectedCheckInDate),
-            dateFormat.format(selectedCheckOutDate),
-            nights
-        );
-        
-        JOptionPane.showMessageDialog(this, message, "Search Results", JOptionPane.INFORMATION_MESSAGE);
+
+        // Calculate total guests
+        int totalGuests = selectedAdults + selectedChildren;
+
+        // Call the database function to search and reserve a room
+        boolean reservationSuccess = searchAndReserveRoom(totalGuests, selectedCheckInDate, selectedCheckOutDate, nights);
+        if (reservationSuccess) {
+            String message = String.format(
+                "Reservation Details:\n\n" +
+                "Guests: %d adults, %d children\n" +
+                "Check-in: %s\n" +
+                "Check-out: %s\n" +
+                "Nights: %d\n\n",
+                selectedAdults, selectedChildren,
+                dateFormat.format(selectedCheckInDate),
+                dateFormat.format(selectedCheckOutDate),
+                nights
+            );
+            
+            JOptionPane.showMessageDialog(this, message, "Reservation Confirmed", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
+
+    // New method to handle database operations
+private boolean searchAndReserveRoom(int totalGuests, Date checkInDate, Date checkOutDate, int nights) {
+    Connection connection = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    
+    try {
+        // Get database connection
+        connection = new Connect().getConnection();
+        
+        // First, find an available room that meets the requirements
+        String findRoomSQL = "SELECT num_chambre, prix_par_jour FROM chambre " +
+                           "WHERE capacite >= ? AND etat_chambre = 'libre' " +
+                           "AND num_chambre NOT IN (" +
+                           "    SELECT num_chambre FROM reservation " +
+                           "    WHERE (check_in_date <= ? AND check_out_date >= ?) " +
+                           "    OR (check_in_date <= ? AND check_out_date >= ?) " +
+                           "    OR (check_in_date >= ? AND check_out_date <= ?)" +
+                           ") ORDER BY capacite ASC, prix_par_jour ASC";
+        
+        stmt = connection.prepareStatement(findRoomSQL);
+        stmt.setInt(1, totalGuests);
+        
+        // Convert dates to SQL dates
+        java.sql.Date sqlCheckIn = new java.sql.Date(checkInDate.getTime());
+        java.sql.Date sqlCheckOut = new java.sql.Date(checkOutDate.getTime());
+        
+        stmt.setDate(2, sqlCheckOut);
+        stmt.setDate(3, sqlCheckIn);
+        stmt.setDate(4, sqlCheckIn);
+        stmt.setDate(5, sqlCheckOut);
+        stmt.setDate(6, sqlCheckIn);
+        stmt.setDate(7, sqlCheckOut);
+        
+        rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            // Found an available room
+            int roomNumber = rs.getInt("num_chambre");
+            double pricePerNight = rs.getDouble("prix_par_jour");
+            double totalPrice = pricePerNight * nights;
+            
+            // For this example, we'll use a hardcoded client ID
+            // In a real application, you would get this from the logged-in user
+            int clientId = 1; // Default client ID
+            
+            // Create the reservation
+            String insertReservationSQL = "INSERT INTO reservation (id_client, num_chambre, date_reservation, check_in_date, check_out_date) " +
+                                       "VALUES (?, ?, CURRENT_DATE, ?, ?)";
+            
+            stmt = connection.prepareStatement(insertReservationSQL, new String[] {"id_reservation"});
+            stmt.setInt(1, clientId);
+            stmt.setInt(2, roomNumber);
+            stmt.setDate(3, sqlCheckIn);
+            stmt.setDate(4, sqlCheckOut);
+            
+            int affectedRows = stmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                JOptionPane.showMessageDialog(this, "Failed to create reservation", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+            
+            // Get the generated reservation ID
+            int reservationId = -1;
+            rs = stmt.getGeneratedKeys();
+            if (rs.next()) {
+                reservationId = rs.getInt(1);
+            }
+            
+            // Create payment record
+            String insertPaymentSQL = "INSERT INTO paiement (id_reservation, montant, date_paiement, methode_paiement) " +
+                                    "VALUES (?, ?, CURRENT_DATE, 'card')";
+            
+            stmt = connection.prepareStatement(insertPaymentSQL);
+            stmt.setInt(1, reservationId);
+            stmt.setDouble(2, totalPrice);
+            stmt.executeUpdate();
+            
+            // Update room status
+            String updateRoomSQL = "UPDATE chambre SET etat_chambre = 'reservee' WHERE num_chambre = ?";
+            stmt = connection.prepareStatement(updateRoomSQL);
+            stmt.setInt(1, roomNumber);
+            stmt.executeUpdate();
+            
+            // Commit the transaction
+            connection.commit();
+            
+            return true;
+        } else {
+            // No available rooms found
+            JOptionPane.showMessageDialog(this, 
+                "No available rooms found for the selected dates and number of guests.\n" +
+                "Please try different dates or adjust your guest count.", 
+                "No Availability", 
+                JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+    } catch (SQLException e) {
+        try {
+            if (connection != null) {
+                connection.rollback();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, 
+            "An error occurred while processing your reservation: " + e.getMessage(), 
+            "Database Error", 
+            JOptionPane.ERROR_MESSAGE);
+        return false;
+    } finally {
+        // Close resources
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (connection != null) connection.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
     
     private void createHeaderPanel() {
         JPanel headerPanel = new JPanel();
