@@ -3,6 +3,9 @@ package espace_reservation;
 import javax.swing.*;
 
 import javax.swing.table.*;
+
+import client_dashboard.ClientSettings;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.text.SimpleDateFormat;
@@ -242,7 +245,7 @@ private boolean searchAndReserveRoom(int totalGuests, Date checkInDate, Date che
             stmt.executeUpdate();
             
             // Commit the transaction
-            connection.commit();
+            // connection.commit();
             
             return true;
         } else {
@@ -281,38 +284,71 @@ private boolean searchAndReserveRoom(int totalGuests, Date checkInDate, Date che
     }
 }
     
-    private void createHeaderPanel() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BorderLayout());
-        headerPanel.setBackground(HEADER_BG);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        
-        // Logo
-        JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        logoPanel.setBackground(HEADER_BG);
-        
-        JLabel logoIconLabel = new JLabel(createTextIcon("🐝", 20));
-        logoIconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-        
-        JLabel logoTextLabel = new JLabel("RestHive");
-        logoTextLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        logoTextLabel.setForeground(DARK_TEXT);
-        
-        logoPanel.add(logoIconLabel);
-        logoPanel.add(logoTextLabel);
-        
-        // Settings icon
-        JPanel settingsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        settingsPanel.setBackground(HEADER_BG);
-        
-        JLabel settingsIconLabel = new JLabel(createTextIcon("⚙️", 20));
-        settingsPanel.add(settingsIconLabel);
-        
-        headerPanel.add(logoPanel, BorderLayout.WEST);
-        headerPanel.add(settingsPanel, BorderLayout.EAST);
-        
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
-    }
+private void createHeaderPanel() {
+    JPanel headerPanel = new JPanel();
+    headerPanel.setLayout(new BorderLayout());
+    headerPanel.setBackground(HEADER_BG);
+    headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+    
+    // Logo
+    JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    logoPanel.setBackground(HEADER_BG);
+    
+    JLabel logoIconLabel = new JLabel(createTextIcon("🐝", 20));
+    logoIconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+    
+    JLabel logoTextLabel = new JLabel("RestHive");
+    logoTextLabel.setFont(new Font("Arial", Font.BOLD, 18));
+    logoTextLabel.setForeground(DARK_TEXT);
+    
+    logoPanel.add(logoIconLabel);
+    logoPanel.add(logoTextLabel);
+    
+    // Settings icon
+    JPanel settingsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    settingsPanel.setBackground(HEADER_BG);
+    
+    JLabel settingsIconLabel = new JLabel(createTextIcon("⚙️", 20));
+    settingsPanel.add(settingsIconLabel);
+
+    settingsIconLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    settingsIconLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(settingsIconLabel);
+                            currentWindow.dispose();
+                            
+                            // Open Reservation window
+                            SwingUtilities.invokeLater(() -> {
+                                new ClientSettings().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            settingsIconLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            settingsIconLabel.setForeground(Color.BLACK);
+                        }
+                    });
+    
+    // Add Reservation Settings title in the center
+    JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    centerPanel.setBackground(HEADER_BG);
+    
+    headerPanel.add(logoPanel, BorderLayout.WEST);
+    headerPanel.add(centerPanel, BorderLayout.CENTER);
+    headerPanel.add(settingsPanel, BorderLayout.EAST);
+
+    
+    
+    mainPanel.add(headerPanel, BorderLayout.NORTH);
+}
     
     private void createGuestsPanel() {
         guestsPanel = new JPanel();

@@ -1,5 +1,6 @@
 package admin_dashboard;
 
+import utilisateur.GererUtilisateurs;
 import utilisateur.Utilisateur;
 import gestion_base_donnees.Connect;
 
@@ -16,6 +17,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.border.*;
+
+import chambre.ChambreGui;
+import espace_paiement.PaiementGui;
+import espace_reservation.ReservationGui;
 
 
 public class AdminGui extends JFrame{
@@ -64,33 +69,142 @@ public class AdminGui extends JFrame{
             // Make the label clickable
             menuLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             
-            // Add click action for Clients
-            if (item.equals("Clients")) {
-                menuLabel.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        // Close current window
-                        Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
-                        currentWindow.dispose();
+            // Add click action for each menu item
+            switch (item) {
+                case "Clients":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Clients window
+                            SwingUtilities.invokeLater(() -> {
+                                new GererUtilisateurs().setVisible(true);
+                            });
+                        }
                         
-                        // Open Clients window
-                        // TODO: open clients window: uncomment the following code
-                        // SwingUtilities.invokeLater(() -> {
-                        //     new code.Clients().setVisible(true);
-                        // });
-                    }
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
                     
-                    // Optional: Add hover effects
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        menuLabel.setForeground(Color.BLUE);
-                    }
+                case "Reservation":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Reservation window
+                            SwingUtilities.invokeLater(() -> {
+                                new ReservationGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
                     
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        menuLabel.setForeground(Color.BLACK);
-                    }
-                });
+                case "Rooms":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Rooms window
+                            SwingUtilities.invokeLater(() -> {
+                                new ChambreGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+                    
+                case "Payment":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Payment window
+                            SwingUtilities.invokeLater(() -> {
+                                new PaiementGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+                    
+                case "Settings":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Settings window
+                            SwingUtilities.invokeLater(() -> {
+                                new AdminSettings().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
             }
             
             menuPanel.add(menuLabel);

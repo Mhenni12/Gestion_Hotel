@@ -3,6 +3,8 @@ package client_dashboard;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import espace_reservation.DemandeReservationGui;
+import espace_reservation.ReservationGui;
 import gestion_base_donnees.Connect;
 
 import java.awt.*;
@@ -42,6 +44,7 @@ public class ClientSettings extends JFrame {
         setMinimumSize(new Dimension(800, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setVisible(true);
 
         // Setup main layout
         mainPanel = new JPanel(new BorderLayout());
@@ -134,12 +137,38 @@ public class ClientSettings extends JFrame {
         
         JLabel reservationLabel = new JLabel("Reservation");
         reservationLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        reservationLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    reservationLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(reservationLabel);
+                            currentWindow.dispose();
+                            
+                            // Open Reservation window
+                            SwingUtilities.invokeLater(() -> {
+                                new DemandeReservationGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            reservationLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            reservationLabel.setForeground(Color.BLACK);
+                        }
+                    });
         
         JLabel settingsLabel = new JLabel("Settings");
         settingsLabel.setFont(new Font("Arial", Font.BOLD, 14));
         
         navPanel.add(reservationLabel);
         navPanel.add(settingsLabel);
+        
         
         // Add components to header
         headerPanel.add(logoPanel, BorderLayout.WEST);
