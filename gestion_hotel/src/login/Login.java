@@ -5,6 +5,7 @@ import javax.swing.border.*;
 
 import admin_dashboard.AdminGui;
 import client_dashboard.ClientGui;
+import client_dashboard.ClientSettings;
 import receptionniste_dashboard.Receptionniste;
 import utilisateur.Utilisateur;
 
@@ -224,14 +225,9 @@ public class Login extends JFrame implements ActionListener{
                     new AdminGui(user);
                     dispose();
                 } 
-	        	else if (userType.equals("receptionniste")) {
-	        		JOptionPane.showMessageDialog(null,"Login successful as Receptionist ","Success",JOptionPane.INFORMATION_MESSAGE);
-                    new Receptionniste(user);
-                    dispose();
-	        	}
 	        	else if (userType.equals("client")) {
 	        		JOptionPane.showMessageDialog(null,"Login successful as Client ","Success",JOptionPane.INFORMATION_MESSAGE);
-                    new ClientGui(user);
+                    new ClientSettings(user.getIdClient());
                     dispose();
 	        	}
             } else

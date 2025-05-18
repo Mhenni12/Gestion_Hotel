@@ -19,17 +19,6 @@ public class Connect {
 
             // Establish connection
             connection = DriverManager.getConnection(url, username, password);
-
-            //! To test connectitvity
-            //TODO: remove this part
-            // //SQL statement to display a table
-            // String viewClientTableSQL = "SELECT * FROM client";
-            // Statement stmt = connection.createStatement();
-            // ResultSet rs = stmt.executeQuery(viewClientTableSQL);
-
-            // while (rs.next()) {
-            //     System.out.println(rs.getString(1));
-            // }
         } 
         catch(SQLException e){ 
             JOptionPane.showMessageDialog(null, "Connection failed or SQL error occurred.","Error", JOptionPane.ERROR_MESSAGE);

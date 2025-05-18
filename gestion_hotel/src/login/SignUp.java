@@ -56,6 +56,7 @@ public class SignUp extends JFrame implements ActionListener{
         headerPanel.setBackground(new Color(255, 193, 7)); // Yellow background
         
         // Create logo and label
+        // TODO: replicate this code (inserting logo) accross all windows
         ImageIcon logoIcon = new ImageIcon("gestion_hotel/src/images/hotelLogo.png");
         JLabel logoLabel = new JLabel(logoIcon);
         JLabel titleLabel = new JLabel("RestHive");
