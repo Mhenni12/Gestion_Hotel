@@ -2,6 +2,11 @@ package admin_dashboard;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import chambre.ChambreGui;
+import espace_paiement.PaiementGui;
+import espace_reservation.ReservationGui;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.Connection;
@@ -9,7 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import gestion_base_donnees.Connect;
-
+import login.Login;
 import utilisateur.GererUtilisateurs;
 
 public class AdminSettings extends JFrame {
@@ -53,16 +58,157 @@ public class AdminSettings extends JFrame {
         menuPanel.setBackground(new Color(245, 245, 245));
         
         JButton clientsBtn = createMenuButton("Clients", false);
-        JButton reservationBtn = createMenuButton("Reservation", false);
-        JButton roomsBtn = createMenuButton("Rooms", false);
-        JButton paymentBtn = createMenuButton("Payment", false);
-        JButton settingsBtn = createMenuButton("Settings", true);
-        
-        menuPanel.add(clientsBtn);
-        menuPanel.add(reservationBtn);
-        menuPanel.add(roomsBtn);
-        menuPanel.add(paymentBtn);
-        menuPanel.add(settingsBtn);
+
+        String[] menuItems = {"Clients", "Reservation", "Rooms", "Payment", "Settings"};
+
+        for (String item : menuItems) {
+            JLabel menuLabel = new JLabel(item);
+            menuLabel.setFont(new Font("Sans-serif", Font.BOLD, 14));
+            menuLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 0));
+            
+            // Make the label clickable
+            menuLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            
+            // Add click action for each menu item
+            switch (item) {
+                case "Clients":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Clients window
+                            SwingUtilities.invokeLater(() -> {
+                                new GererUtilisateurs().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+                    
+                case "Reservation":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Reservation window
+                            SwingUtilities.invokeLater(() -> {
+                                new ReservationGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+                    
+                case "Rooms":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Rooms window
+                            SwingUtilities.invokeLater(() -> {
+                                new ChambreGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+                    
+                case "Payment":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Payment window
+                            SwingUtilities.invokeLater(() -> {
+                                new PaiementGui().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+                    
+                case "Settings":
+                    menuLabel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            // Close current window
+                            Window currentWindow = SwingUtilities.getWindowAncestor(menuPanel);
+                            currentWindow.dispose();
+                            
+                            // Open Settings window
+                            SwingUtilities.invokeLater(() -> {
+                                new AdminSettings().setVisible(true);
+                            });
+                        }
+                        
+                        // Hover effects
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLUE);
+                        }
+                        
+                        @Override
+                        public void mouseExited(MouseEvent e) {
+                            menuLabel.setForeground(Color.BLACK);
+                        }
+                    });
+                    break;
+            }
+            
+            menuPanel.add(menuLabel);
+        }
         
         headerPanel.add(logoPanel, BorderLayout.WEST);
         headerPanel.add(menuPanel, BorderLayout.CENTER);
@@ -360,61 +506,101 @@ public class AdminSettings extends JFrame {
      * Deletes the current user account from the database
      * @return true if deletion was successful, false otherwise
      */
-    private boolean deleteCurrentAccount() {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        boolean success = false;
+ private boolean deleteCurrentAccount() {
+    Connection conn = null;
+    PreparedStatement stmt = null;
+    PreparedStatement checkClientStmt = null;
+    PreparedStatement deleteReservationsStmt = null;
+    PreparedStatement deletePaymentsStmt = null;
+    PreparedStatement deleteUserStmt = null;
+    PreparedStatement deleteClientStmt = null;
+    ResultSet rs = null;
+    boolean success = false;
+    
+    try {
+        conn = new Connect().getConnection();
+        conn.setAutoCommit(false); // Start transaction
         
-        try {
-            conn = new Connect().getConnection();
+        // 1. First get the user details to check if it's a client user
+        String getUserSql = "SELECT id_client, type_utilisateur FROM utilisateur WHERE id_utilisateur = ?";
+        stmt = conn.prepareStatement(getUserSql);
+        stmt.setInt(1, currentUserId);
+        rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            Integer clientId = rs.getObject("id_client", Integer.class);
+            String userType = rs.getString("type_utilisateur");
             
-            // Begin transaction
-            conn.setAutoCommit(false);
+            // 2. If this is a client user, we need to handle client deletion
+            if (clientId != null && "client".equals(userType)) {
+                // First delete payments for this client's reservations
+                String deletePaymentsSql = "DELETE p FROM paiement p " +
+                                       "JOIN reservation r ON p.id_reservation = r.id_reservation " +
+                                       "WHERE r.id_client = ?";
+                deletePaymentsStmt = conn.prepareStatement(deletePaymentsSql);
+                deletePaymentsStmt.setInt(1, clientId);
+                deletePaymentsStmt.executeUpdate();
+                
+                // Then delete reservations for this client
+                String deleteReservationsSql = "DELETE FROM reservation WHERE id_client = ?";
+                deleteReservationsStmt = conn.prepareStatement(deleteReservationsSql);
+                deleteReservationsStmt.setInt(1, clientId);
+                deleteReservationsStmt.executeUpdate();
+                
+                // Finally delete the client record
+                String deleteClientSql = "DELETE FROM client WHERE id_client = ?";
+                deleteClientStmt = conn.prepareStatement(deleteClientSql);
+                deleteClientStmt.setInt(1, clientId);
+                deleteClientStmt.executeUpdate();
+            }
             
-            // First check if this is a client user (has id_client reference)
-            // If so, need to handle client deletion as well
-            
-            // 1. Delete the user from the utilisateur table
-            String sql = "DELETE FROM utilisateur WHERE email_utilisateur = ?";
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, userEmail);
-            int rowsAffected = stmt.executeUpdate();
+            // 3. Delete the user account
+            String deleteUserSql = "DELETE FROM utilisateur WHERE id_utilisateur = ?";
+            deleteUserStmt = conn.prepareStatement(deleteUserSql);
+            deleteUserStmt.setInt(1, currentUserId);
+            int rowsAffected = deleteUserStmt.executeUpdate();
             
             if (rowsAffected > 0) {
-                // Successfully deleted from utilisateur table
-                
-                // 2. If this is a client user, delete related entries
-                // (This would need to handle any dependencies like reservations, payments, etc.)
-                
-                // Commit the transaction
-                conn.commit();
+                conn.commit(); // Commit transaction if all deletions succeeded
                 success = true;
             } else {
-                // User not found or deletion failed
-                conn.rollback();
+                conn.rollback(); // Rollback if user deletion failed
             }
-            
-        } catch (SQLException e) {
-            try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            e.printStackTrace();
-        } finally {
-            try {
-                if (stmt != null) stmt.close();
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        } else {
+            conn.rollback(); // User not found
         }
         
-        return success;
+    } catch (SQLException e) {
+        try {
+            if (conn != null) conn.rollback();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Error deleting account: " + e.getMessage(),
+            "Database Error",
+            JOptionPane.ERROR_MESSAGE);
+    } finally {
+        // Close all resources
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (deletePaymentsStmt != null) deletePaymentsStmt.close();
+            if (deleteReservationsStmt != null) deleteReservationsStmt.close();
+            if (deleteClientStmt != null) deleteClientStmt.close();
+            if (deleteUserStmt != null) deleteUserStmt.close();
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
+    
+    return success;
+}
     
     /**
      * Logs out the current user and returns to the login screen
@@ -423,8 +609,8 @@ public class AdminSettings extends JFrame {
         // Here you would redirect to your login screen
         // For example:
         try {
-            // Assuming you have a Login class with a constructor
-            JFrame loginFrame = new JFrame("Login"); // Replace with your actual login frame
+
+            JFrame loginFrame = new Login(); // Replace with your actual login frame
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             loginFrame.setSize(800, 600);
             loginFrame.setLocationRelativeTo(null);
@@ -983,11 +1169,13 @@ private boolean isValidPhoneNumber(String phoneNumber) {
 }
 
 // Method to add a client to the database
+// Method to add a client to the database
 private boolean addClientToDatabase(String nom, String prenom, String email, 
                                   String adresse, String tel, String password) {
     Connection conn = null;
     PreparedStatement clientStmt = null;
     PreparedStatement userStmt = null;
+    PreparedStatement getIdStmt = null;
     ResultSet rs = null;
     boolean success = false;
     
@@ -997,23 +1185,29 @@ private boolean addClientToDatabase(String nom, String prenom, String email,
         // Begin transaction
         conn.setAutoCommit(false);
         
-        // 1. Insert into client table
-        String clientSql = "INSERT INTO client (nom_client, prenom_client, email_client, adresse_client, tel_client) " +
-                        "VALUES (?, ?, ?, ?, ?)";
-        clientStmt = conn.prepareStatement(clientSql, new String[] {"id_client"});
+        // 1. Insert into client table - FIX THE COLUMN COUNT TO MATCH YOUR TABLE STRUCTURE
+        String clientSql = "INSERT INTO client (nom_client, prenom_client, adresse_client, tel_client) " +
+                        "VALUES (?, ?, ?, ?)";
+        clientStmt = conn.prepareStatement(clientSql);
         clientStmt.setString(1, nom);
         clientStmt.setString(2, prenom);
-        clientStmt.setString(3, email);
-        clientStmt.setString(4, adresse);
-        clientStmt.setString(5, tel);
+        clientStmt.setString(3, adresse);
+        clientStmt.setString(4, tel);
         
         int clientRowsAffected = clientStmt.executeUpdate();
         
         if (clientRowsAffected > 0) {
-            // Get the generated client ID
-            rs = clientStmt.getGeneratedKeys();
+            // Instead of getGeneratedKeys, query for the client ID using a SELECT statement
+            String getIdSql = "SELECT id_client FROM client WHERE nom_client = ? AND prenom_client = ? AND tel_client = ?";
+            getIdStmt = conn.prepareStatement(getIdSql);
+            getIdStmt.setString(1, nom);
+            getIdStmt.setString(2, prenom);
+            getIdStmt.setString(3, tel);
+            
+            rs = getIdStmt.executeQuery();
+            
             if (rs.next()) {
-                int clientId = rs.getInt(1);
+                int clientId = rs.getInt("id_client");
                 
                 // 2. Insert into utilisateur table
                 String userSql = "INSERT INTO utilisateur (email_utilisateur, mot_de_passe, id_client, type_utilisateur) " +
@@ -1066,6 +1260,7 @@ private boolean addClientToDatabase(String nom, String prenom, String email,
         try {
             if (rs != null) rs.close();
             if (clientStmt != null) clientStmt.close();
+            if (getIdStmt != null) getIdStmt.close();
             if (userStmt != null) userStmt.close();
             if (conn != null) {
                 conn.setAutoCommit(true);
